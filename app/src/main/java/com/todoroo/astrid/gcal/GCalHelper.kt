@@ -74,7 +74,7 @@ class GCalHelper @Inject constructor(
         try {
             values.put(CalendarContract.Events.TITLE, task.title)
             values.put(CalendarContract.Events.DESCRIPTION, task.notes)
-            values.put(CalendarContract.Events.HAS_ALARM, 0)
+            values.put(CalendarContract.Events.HAS_ALARM, 1)
             val valuesContainCalendarId = (values.containsKey(CalendarContract.Events.CALENDAR_ID)
                     && !isNullOrEmpty(values.getAsString(CalendarContract.Events.CALENDAR_ID)))
             if (!valuesContainCalendarId) {
@@ -85,6 +85,13 @@ class GCalHelper @Inject constructor(
             }
             createStartAndEndDate(task, values)
             val eventUri = cr.insert(CalendarContract.Events.CONTENT_URI, values)
+						var eventID=(eventUri?.getLastPathSegment()!!)?.toLong()!!
+						val values = ContentValues().apply {
+								put(CalendarContract.Reminders.MINUTES, 0)
+								put(CalendarContract.Reminders.EVENT_ID, eventID)
+								put(CalendarContract.Reminders.METHOD, CalendarContract.Reminders.METHOD_ALERT)
+						}
+						cr.insert(CalendarContract.Reminders.CONTENT_URI, values)
             cr.notifyChange(eventUri!!, null)
             return eventUri
         } catch (e: Exception) {
@@ -109,6 +116,13 @@ class GCalHelper @Inject constructor(
             updateValues.put(CalendarContract.Events.DESCRIPTION, task.notes)
             createStartAndEndDate(task, updateValues)
             cr.update(Uri.parse(uri), updateValues, null, null)
+						var eventID=(Uri.parse(uri).getLastPathSegment())?.toLong()!!
+						val values = ContentValues().apply {
+								put(CalendarContract.Reminders.MINUTES, 0)
+								put(CalendarContract.Reminders.EVENT_ID, eventID)
+								put(CalendarContract.Reminders.METHOD, CalendarContract.Reminders.METHOD_ALERT)
+						}
+						cr.insert(CalendarContract.Reminders.CONTENT_URI, values)
         } catch (e: Exception) {
             Timber.e(e, "Failed to update calendar: %s [%s]", uri, task)
         }
